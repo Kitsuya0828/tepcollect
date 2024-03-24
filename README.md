@@ -5,5 +5,5 @@ A tool to get electricity prices and usage from [くらしTEPCO web](https://www
 ## Usage
 ```bash
 docker build -t tepcollect .
-docker run -it -e TEPCO_USERNAME=***** -e TEPCO_PASSWORD=***** tepcollect
+docker run -it -e TEPCO_USERNAME=***** -e TEPCO_PASSWORD=***** -e SLACK_TOKEN=xoxb-***** -e SLACK_CHANNEL_ID=***** tepcollect
 ```

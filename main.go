@@ -1,12 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/sclevine/agouti"
+	"github.com/slack-go/slack"
 )
 
 func logout(page *agouti.Page) {
@@ -36,6 +38,11 @@ func main() {
 	)
 	driver.Start()
 	defer driver.Stop()
+
+	slackToken := os.Getenv("SLACK_TOKEN")
+	slackChannelID := os.Getenv("SLACK_CHANNEL_ID")
+	fmt.Println("slackToken: ", slackToken, "slackChannelID: ", slackChannelID)
+	api := slack.New(slackToken)
 
 	page, _ := driver.NewPage()
 
@@ -92,18 +99,22 @@ func main() {
 		}
 	}
 
+	msg := ""
+
 	log.Printf("info: monthly usage")
 	nowPrice, err := page.FindByClass("price").Text()
 	if err != nil {
 		log.Printf("error: %v", err)
 	}
 	log.Printf("info: nowPrice=%v", nowPrice)
+	msg += "nowPrice=" + nowPrice + "\n"
 
 	forecastPrice, err := page.FindByClass("price_forecast").FindByClass("txt_red").Text()
 	if err != nil {
 		log.Printf("error: %v", err)
 	}
 	log.Printf("info: forecastPrice=%v", forecastPrice)
+	msg += "forecastPrice=" + forecastPrice + "\n"
 
 	log.Printf("info: daily usage")
 	cnt, err := page.AllByClass("gaclick").Count()
@@ -127,11 +138,17 @@ func main() {
 		log.Printf("error: %v", err)
 	}
 	log.Printf("info: yesterdayPrice=%s", yesterdayPrice)
+	msg += "yesterdayPrice=" + yesterdayPrice + "\n"
 
 	yesterdayUsage, err := page.FindByClass("kwh").Text()
 	if err != nil {
 		log.Printf("error: %v", err)
 	}
 	log.Printf("info: yesterdayUsage=%s", yesterdayUsage)
+	msg += "yesterdayUsage=" + yesterdayUsage + "\n"
 	time.Sleep(3 * time.Second)
+
+	if _, _, err = api.PostMessage(slackChannelID, slack.MsgOptionText(msg, true)); err != nil {
+		log.Printf("error: %v", err)
+	}
 }
