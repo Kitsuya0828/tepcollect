@@ -9,6 +9,14 @@ import (
 	"github.com/sclevine/agouti"
 )
 
+func logout(page *agouti.Page) {
+	log.Printf("info: click logout button")
+	if err := page.FindByClass("logout").Click(); err != nil {
+		log.Fatal(err)
+	}
+	time.Sleep(3 * time.Second)
+}
+
 func main() {
 	driver := agouti.ChromeDriver(
 		agouti.ChromeOptions(
@@ -56,6 +64,7 @@ func main() {
 	if err := page.FindByButton("ログイン").Click(); err != nil {
 		log.Fatal(err)
 	}
+	defer logout(page)
 	time.Sleep(3 * time.Second)
 
 	log.Printf("info: close popup")
@@ -65,7 +74,8 @@ func main() {
 		for _, closeClass := range closeClasses {
 			if err := page.FindByClass(closeClass).Click(); err != nil {
 				if !strings.Contains(err.Error(), "element not found") {
-					log.Fatal(err)
+					log.Printf("error: %v", err)
+					return
 				}
 			} else {
 				log.Printf("info: click %v", closeClass)
@@ -78,20 +88,20 @@ func main() {
 		}
 		if closeAttempts > 20 {
 			page.Screenshot("screenshot.png")
-			log.Fatal("error: too many close popup")
+			log.Print("error: too many close popup")
 		}
 	}
 
 	log.Printf("info: monthly usage")
 	nowPrice, err := page.FindByClass("price").Text()
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("error: %v", err)
 	}
 	log.Printf("info: nowPrice=%v", nowPrice)
 
 	forecastPrice, err := page.FindByClass("price_forecast").FindByClass("txt_red").Text()
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("error: %v", err)
 	}
 	log.Printf("info: forecastPrice=%v", forecastPrice)
 
@@ -106,7 +116,7 @@ func main() {
 			continue
 		}
 		if err := ele.Click(); err != nil {
-			log.Fatal(err)
+			log.Printf("error: %v", err)
 		}
 		break
 	}
@@ -114,14 +124,14 @@ func main() {
 
 	yesterdayPrice, err := page.FindByClass("price").Text()
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("error: %v", err)
 	}
-	log.Printf("info: yesterdayPrice=%v", yesterdayPrice)
+	log.Printf("info: yesterdayPrice=%s", yesterdayPrice)
 
 	yesterdayUsage, err := page.FindByClass("kwh").Text()
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("error: %v", err)
 	}
-	log.Printf("info: yesterdayUsage=%v", yesterdayUsage)
+	log.Printf("info: yesterdayUsage=%s", yesterdayUsage)
 	time.Sleep(3 * time.Second)
 }
